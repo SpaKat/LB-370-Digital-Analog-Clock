@@ -19,11 +19,11 @@ const uint8_t columnSize = 13;
 const uint8_t layerSize = 7;
 // Matrices for each hand + a layer so they rotate in a line. 
 int secondMatrix[rowSize][columnSize];
-int secondLayer[layerSize];
+double secondLayer[layerSize];
 int minuteMatrix[rowSize][columnSize];
-int minuteLayer[layerSize];
+double minuteLayer[layerSize];
 int hourMatrix[rowSize][columnSize];
-int hourLayer[layerSize];
+double hourLayer[layerSize];
 //---------------------------------------------------------
 // color constants -------------------------
 uint32_t red= strip.Color(50, 0, 0);
@@ -33,9 +33,9 @@ uint32_t blank = strip.Color(0, 0, 0);
 //------------------------------------------
 // Boot Time------------
 // boot time for minutes
-uint8_t setMin = 50;
+uint8_t setMin = 22;
 // boot time for hours
-uint8_t setHr = 7;
+uint8_t setHr = 8;
 //--------------------------
 // Current Time------------------------------------
 // current time in seconds
@@ -54,6 +54,7 @@ void setup() {
   pinMode(hourPin, INPUT);
   pinMode(minutePin, INPUT);
   pinMode(secondPin, INPUT); 
+  //Serial.begin(9600);
   // setup for the hands on the clock 
   int i;
   // hour
@@ -65,9 +66,10 @@ void setup() {
     minuteMatrix[i][6] = 2;
   }
   // second 
-  for(i =4; i <7 ;i++){
+  for(i =6; i <7 ;i++){
     secondMatrix[i][6] = 3;
   }
+  secondMatrix[0][6] = 3;
   // rotate the matrices to reflect the starting time
   // rotate Hour
   // 12 hour clock 60/12 = 5 -> moving 1 hour equals 5 rotations of the matrix
@@ -86,8 +88,6 @@ void loop() {
   uint32_t theTime = millis()/1000;
   // check for when current Time is different that the last known time. 
   if(theTime != lastTime){
-    // add + 1 to the current time in seconds
-    timeInSeconds++; 
     // rotate seconds matrix
     rotateMatrix(secondLayer,secondMatrix);
     // rotate minute matrix if time in seconds is >= 60
@@ -99,6 +99,9 @@ void loop() {
       // rotate minute matrix
       rotateMatrix(minuteLayer,minuteMatrix);
     }
+    //Serial.println(timeinMinutes);
+    // add + 1 to the current time in seconds
+    timeInSeconds++; 
     // rotate hour matrix if time in minutes is >= 60
     if(timeinMinutes >= clockOver){
       // subtract time in miuntes by 60 due to buttons 
@@ -113,6 +116,7 @@ void loop() {
     updateMatrix();
     // show the strip change
     strip.show(); 
+    
   }
   // if the hour button is hit, add +1 to the hour
   if(digitalRead(hourPin) == HIGH){
@@ -134,18 +138,18 @@ void loop() {
   }     
 }
 // rotate a give matrix around the center at the same speed
-void rotateMatrix(int layer[layerSize], int mat[rowSize][columnSize]){
+void rotateMatrix(double layer[layerSize], int mat[rowSize][columnSize]){
   // around the origin starting with the outer layer to the inter layer. 
-  for (int j = layerSize-1; j > 0; j--) {
+  for (int j = 6; j > 0; j--) {
     // 13*13: outer layer is 48. so layer handles the speed of each layer   
         layer[j] += j*8.0; // or j*((rowSize*4)-4)/60*10
         // if that layer cross the clockOver line, it moves
         if(layer[j] >= clockOver ) {
           // move that layer
-          rotate(abs(j-layerSize-1),mat);
+          rotate(abs(j-6),mat);
           // substract that move but leave the extra if any
           layer[j] -=clockOver;
-        }
+        }       
     }
 }
 // update the LED strip with the values of the matrices
